@@ -1,0 +1,20 @@
+// Workflow for Custom Function :
+// Quotes Module :
+ 
+rec_id = input.quote.get("Quotes.ID");
+subject = input.quote.get("Subject");
+subject = subject.trim();
+tokenMap = map();
+tokenMap.put("module_name", "Quotes");
+tokenMap.put("record_name", subject);     
+resp=
+zoho.crm.invokeConnector("dropboxextension.dropboxconnector.createfolderforcrmrecord", tokenMap);
+status = resp.get("status_code");
+if (status == "200")
+{
+resp_map = (resp.get("response")).toMap();
+folder_id = resp_map.get("id");
+updateMap = map();
+updateMap.put("Dropbox Folder ID", folder_id);
+update_resp = zoho.crm.updateRecord("Quotes", rec_id + "", updateMap);
+}
