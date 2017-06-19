@@ -3,7 +3,7 @@ Use the Dropbox extension for Zoho CRM to store data from custom modules.
 
 The workflow Custom Function for any existing Module for Dropbox :
 
-The Dropbox extension for Zoho CRM is one convenient way to access stored data and share files with leads and contacts (by default) from Zoho CRM. You can extend this functionality to custom modules too. Follow the steps below to see how it's done.
+The Dropbox extension for Zoho CRM is one convenient way to access stored data and share files with leads and contacts (by default) from Zoho CRM. You can extend this functionality to custom modules too. Follow the steps below to see how it's done. The Quotes module is used as a reference here. You can choose any module of your choice, though.
  
 To associate the above custom function to a workflow rule:
  
