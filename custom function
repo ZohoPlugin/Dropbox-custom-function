@@ -1,20 +1,26 @@
 // Workflow for Custom Function :
 // Quotes Module :
  
-rec_id = input.quote.get("Quotes.ID");
-subject = input.quote.get("Subject");
+rec_id = quote.get("Quotes.ID");
+subject = quote.get("Subject");
 subject = subject.trim();
-tokenMap = map();
-tokenMap.put("module_name", "Quotes");
-tokenMap.put("record_name", subject);     
-resp=
-zoho.crm.invokeConnector("dropboxextension.dropboxconnector.createfolderforcrmrecord", tokenMap);
+tokenMap = Map:String();
+tokenMap.put("module_name","Quotes");
+tokenMap.put("record_name",subject);
+tokenMap.put("$ZohoConnectorContext",zoho.loginuserid);
+resp = zoho.crm.invokeConnector("dropboxextension.dropboxconnector.createfolderforcrmrecordv2",tokenMap,true);
 status = resp.get("status_code");
-if (status == "200")
+if(status == "200")
 {
-resp_map = (resp.get("response")).toMap();
-folder_id = resp_map.get("id");
-updateMap = map();
-updateMap.put("Dropbox Folder ID", folder_id);
-update_resp = zoho.crm.updateRecord("Quotes", rec_id + "", updateMap);
+	resp_map = resp.get("response");
+	resp_metadata = resp_map.getJSON("metadata");
+	folder_id = resp_metadata.getJSON("id");
+	dataMap = Map();
+	dataMap.put("dropboxextension__Dropbox_Folder_ID",folder_id);
+	dataMap.put("id",rec_id);
+	dataList = list();
+	dataList.add(dataMap);
+	updateMap = {"module":"Quotes","data":dataList};
+	crmResponse = zoho.crm.invokeConnector("crm.update",updateMap);
+	info crmResponse;
 }
