@@ -1,108 +1,140 @@
 // Related List for Custom Module :
 //Quotes Module
  
-rec_id = input.quote.get("Quotes.ID");
-rec_info = zoho.crm.getRecordById("Quotes", rec_id.toLong());
-dbx_folder_id = rec_info.get("Dropbox Folder ID");
-if (dbx_folder_id == null)
+quote_id = quote.get("Quotes.ID");
+recordMap = {"module":"Quotes","id":quote_id};
+crmResponse = zoho.crm.invokeConnector("crm.get",recordMap);
+quote_info = crmResponse.get("response").get("data");
+dbx_folder_id = quote_info.getJSON("dropboxextension__Dropbox_Folder_ID");
+acc_type = zoho.crm.getOrgVariable("dropboxextension__account_type");
+display_name = "";
+tagg = "";
+if(acc_type == "business")
 {
-xmlList = ("<error><message>No files exists for this record.</message></error>");
-return xmlList;
+	tokenMapp = Map();
+	tokenMapp.put("$ZohoConnectorContext",zoho.loginuserid);
+	resp = zoho.crm.invokeConnector("dropboxextension.dropboxconnector.getcurrentaccount",tokenMapp,true);
+	root_info = resp.get("response").getJSON("root_info");
+	tagg = root_info.getJSON(".tag");
+	if(tagg == "team")
+	{
+		display_name = root_info.getJSON("home_path");
+	}
+	else
+	{
+		display_name = "";
+	}
+}
+if(dbx_folder_id == null)
+{
+	xmlList = "<error><message>No files exists for this record.</message></error>";
+	return xmlList;
 }
 else
 {
-path_info = map();
-path_info.put("path", dbx_folder_id);
-tokenMap = map();
-tokenMap.put("path_info", path_info);
-resp = zoho.crm.invokeConnector(("dropboxextension.dropboxconnector.getmetadata"), tokenMap);
-status = resp.get("status_code");
-if (status == "200")
-{
-metadata = (resp.get("response")).toMap();
-path_info1 = map();
-path_info1.put("path", metadata.get("path_display"));
-tokenMap1 = map();
-tokenMap1.put("path_info", path_info1);
-resp1 = zoho.crm.invokeConnector("dropboxextension.dropboxconnector.listfolder", tokenMap1);
-listfolder_resp = resp1.get("response");
-entries = listfolder_resp.getJSON("entries");
-entries_list = entries.toJSONList();
-entries_len = entries_list.size();
-if (entries_len == 0)
-{
-xmlList = ("<error><message>No files exists for this record.</message></error>");
-return xmlList;
-}
-else
-{
-i = 0;
-recordsXmlStr = "<record>";
-for each entry in entries_list
-{
-tag = entry.getJSON(".tag");
-name = entry.getJSON("name");
-size = "";
-if (entry.indexOf(("size")) != -1)
-{
-size = entry.getJSON(("size"));
-}
-path_display = entry.getJSON("path_display");
-modified_time = "";
-if (entry.indexOf("client_modified") != -1)
-{
-modified_time = entry.getJSON("client_modified");
-}
-type = "File";
-link = "https://www.dropbox.com/home" + path_display;
-link3 = link.replaceAll("'","%27");
-link3 = link3.replaceAll("&","%26");
-link3 = link3.replaceAll("<","%3C");
-if (tag == "folder")
-{
-type = "Folder";
-}
-if (modified_time != "")
-{
-modified_time = modified_time.replaceAll("T"," ");
-modified_time = modified_time.replaceAll("Z"," ");
-}
-size_str = "-";
-if (size != "")
-{
-size_str = ((((size).toDecimal() / 1024))) + "";
-if (size_str.indexOf(".") > 0)
-{
-pos = (size_str.indexOf(".") + 3);
-if (pos > size_str.length())
-{
-pos = size_str.length();
-}
-size_str = size_str.subString(0,pos);
-}
-size_str = (size_str) + " KB";
-}
-recordsXmlStr = recordsXmlStr + "<row no='" + i + "'>";
-recordsXmlStr = recordsXmlStr + "<FL val ='Name' link='true' url='" + link3 + "'><![CDATA[" + name + "]]></FL>";
-recordsXmlStr = recordsXmlStr + "<FL val='Type'>" + type + "</FL>";
-if (modified_time == "")
-{
-recordsXmlStr = recordsXmlStr + "<FL val='Modified'>-</FL>";
-}
-else
-{
-recordsXmlStr = (recordsXmlStr + "<FL val='Modified'>" + (modified_time.toTime())) + "</FL>";
-}
-recordsXmlStr = (recordsXmlStr + "<FL val='Size'>" + size_str) + "</FL>";
-recordsXmlStr = recordsXmlStr + "</row>";
-}
-recordsXmlStr = recordsXmlStr + "</record>";
-return recordsXmlStr;
-}
-}
-else
-{
-xmlList = ("<error><message>Unable to get files related to this record from Dropbox.</message></error>");
-return xmlList;
-}
+	path_info = Map:String();
+	path_info.put("path",dbx_folder_id);
+	tokenMap = Map:String();
+	tokenMap.put("path_info",path_info);
+	tokenMap.put("$ZohoConnectorContext",zoho.loginuserid);
+	resp = zoho.crm.invokeConnector("dropboxextension.dropboxconnector.getmetadata",tokenMap,true);
+	status = resp.get("status_code");
+	if(status == "200")
+	{
+		metadata = resp.get("response")._toMap();
+		path_info1 = Map:String();
+		path_info1.put("path",metadata.get("path_display"));
+		tokenMap1 = Map:String();
+		tokenMap1.put("path_info",path_info1);
+		tokenMap1.put("$ZohoConnectorContext",zoho.loginuserid);
+		resp1 = zoho.crm.invokeConnector("dropboxextension.dropboxconnector.listfolder",tokenMap1,true);
+		listfolder_resp = resp1.get("response");
+		entries = listfolder_resp.getJSON("entries");
+		entries_list = entries.toJSONList();
+		entries_len = entries_list.size();
+		if(entries_len == 0)
+		{
+			xmlList = "<error><message>No files exists for this record.</message></error>";
+			return xmlList;
+		}
+		else
+		{
+			i = 0;
+			recordsXmlStr = "<record>";
+			for each  entry in entries_list
+			{
+				tag = entry.getJSON(".tag");
+				name = entry.getJSON("name");
+				size = "";
+				if(entry.indexOf("size") != -1)
+				{
+					size = entry.getJSON("size");
+				}
+				path_display = entry.getJSON("path_display");
+				modified_time = "";
+				if(entry.indexOf("client_modified") != -1)
+				{
+					modified_time = entry.getJSON("client_modified");
+				}
+				type = "File";
+				if(acc_type == "business" && tagg == "team")
+				{
+					link = "https://www.dropbox.com/home" + display_name + "/" + path_display;
+				}
+				else
+				{
+					link = "https://www.dropbox.com/home" + path_display;
+				}
+				link3 = link.replaceAll("'","%27");
+				link3 = link3.replaceAll("&","%26");
+				link3 = link3.replaceAll("<","%3C");
+				link3 = link3.replaceAll("#","%23");
+				link3 = link3.replaceAll("@","%40");
+				if(tag == "folder")
+				{
+					type = "Folder";
+				}
+				if(modified_time != "")
+				{
+					modified_time = modified_time.replaceAll("T"," ");
+					modified_time = modified_time.replaceAll("Z"," ");
+				}
+				size_str = "-";
+				if(size != "")
+				{
+					size_str = size.toDecimal() / 1024 + "";
+					if(size_str.indexOf(".") > 0)
+					{
+						pos = size_str.indexOf(".") + 3;
+						if(pos > size_str.length())
+						{
+							pos = size_str.length();
+						}
+						size_str = size_str.subString(0,pos);
+					}
+					size_str = size_str + " KB";
+				}
+				recordsXmlStr = recordsXmlStr + "<row no='" + i + "'>";
+				recordsXmlStr = recordsXmlStr + "<FL val ='Name'  link='true'  url='" + link3 + "'><![CDATA[" + name + "]]></FL>";
+				recordsXmlStr = recordsXmlStr + "<FL val='Type'>" + type + "</FL>";
+				if(modified_time == "")
+				{
+					recordsXmlStr = recordsXmlStr + "<FL val='Modified'>-</FL>";
+				}
+				else
+				{
+					recordsXmlStr = recordsXmlStr + "<FL val='Modified'>" + modified_time.toTime() + "</FL>";
+				}
+				recordsXmlStr = recordsXmlStr + "<FL val='Size'>" + size_str + "</FL>";
+				recordsXmlStr = recordsXmlStr + "</row>";
+			}
+			recordsXmlStr = recordsXmlStr + "</record>";
+			return recordsXmlStr;
+		}
+	}
+	else
+	{
+		xmlList = "<error><message>Unable to get files related to this record from Dropbox.</message></error>";
+		return xmlList;
+	}
 }
